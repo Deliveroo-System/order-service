@@ -1,21 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const orderController = require("../controllers/orderController");
-const { authMiddleware } = require("../middleware/authMiddleware");
+const { authMiddleware, authorizeRoles } = require("../middleware/authMiddleware");
 
-// ✅ Create order (Only Customers)
-router.post("/", authMiddleware, orderController.createOrder);
-
-// ✅ Get all orders (Only Restaurant Admins)
-router.get("/", authMiddleware, orderController.getAllOrders);
-
-// ✅ Get order by ID (Authenticated Users)
-router.get("/:id", authMiddleware, orderController.getOrderById);
-
-// ✅ Update order status (Only Restaurant Admins & Delivery Personnel)
-router.put("/:id", authMiddleware, orderController.updateOrderStatus);
-
-// ✅ Delete an order (Only Admins)
-router.delete("/:id", authMiddleware, orderController.deleteOrder);
+// ✅ Correct usage of authorizeRoles
+router.post("/", authMiddleware, authorizeRoles("customer"), orderController.createOrder);
+router.get("/", authMiddleware, authorizeRoles("restaurantAdmin"), orderController.getAllOrders);
+router.put("/:id", authMiddleware, authorizeRoles("restaurantAdmin", "deliveryPersonnel"), orderController.updateOrderStatus);
+router.delete("/:id", authMiddleware, authorizeRoles("restaurantAdmin"), orderController.deleteOrder);
 
 module.exports = router;
