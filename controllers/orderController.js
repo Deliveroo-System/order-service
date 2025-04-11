@@ -5,6 +5,8 @@ exports.createOrder = async (req, res) => {
   try {
     const { customerName, customerEmail, foodItems, totalPrice } = req.body;
     
+    console.log("Received order data:", req.body);
+
     const newOrder = new Order({
       customerName,
       customerEmail,
@@ -12,9 +14,12 @@ exports.createOrder = async (req, res) => {
       totalPrice,
     });
 
-    await newOrder.save();
-    res.status(201).json({ message: "Order placed successfully", order: newOrder });
+    const savedOrder = await newOrder.save(); // ✅ store saved document
+    console.log("Order saved:", savedOrder);  // ✅ log the saved order
+
+    res.status(201).json({ message: "Order placed successfully", order: savedOrder });
   } catch (error) {
+    console.error("Error saving order:", error); // 👈 optional, helpful
     res.status(500).json({ error: error.message });
   }
 };
