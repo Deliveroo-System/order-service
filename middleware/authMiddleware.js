@@ -1,23 +1,28 @@
 const jwt = require("jsonwebtoken");
 
-exports.authMiddleware = (req, res, next) => {
-  const token = req.header("Authorization");
-  if (!token) return res.status(401).json({ message: "No token, authorization denied" });
+const authenticateToken = (req, res, next) => {
+  const token = req.headers["authorization"]?.split(" ")[1]; // Get token from Authorization header
+  if (!token) return res.status(401).json({ message: "Access denied. No token provided." });
 
-  try {
-    const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
-    req.user = { userId: decoded.userId, email: decoded.email, role: decoded.role };
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(401).json({ message: "Unauthorized. Invalid token." });
+
+    req.user = decoded; // Store decoded user info (sub, email, role) in req.user
     next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
-  }
+  });
 };
 
-exports.authorizeRoles = (...roles) => {
+// Middleware to check if the user has the required roles
+const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Access Denied: Insufficient role permissions" });
+    const userRole = req.user?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]; // Extract role from token
+    const prefixedRoles = roles.map(role => `ROLE_${role.toUpperCase()}`); // Normalize roles to match ROLE_ format
+    if (!userRole || !prefixedRoles.includes(userRole)) {
+      return res.status(403).json({ message: "Access denied. Insufficient role." });
     }
     next();
   };
 };
+
+// Export authenticate middleware to use in routes
+module.exports = { authenticateToken, authorizeRoles };

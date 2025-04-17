@@ -1,12 +1,10 @@
 const express = require('express');
 const router = express.Router();
+
+const { authenticateToken, authorizeRoles } = require('../middleware/authMiddleware'); // Ensure correct import
 const { createUserDetails } = require('../controllers/userDetailsController');
-const { authMiddleware, authorizeRoles } = require('../middleware/authMiddleware');
 
-// Require login
-router.post('/userdetails', authMiddleware, createUserDetails);
-
-// Or require login + specific role (e.g., only 'customer' can place order)
-router.post('/userdetails', authMiddleware, authorizeRoles('customer'), createUserDetails);
+// Require login + specific role (e.g., only 'Customer' can place order)
+router.post('/userdetails', authenticateToken, authorizeRoles('CUSTOMER'), createUserDetails); // Use uppercase role
 
 module.exports = router;

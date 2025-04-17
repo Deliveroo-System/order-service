@@ -1,5 +1,7 @@
 const UserDetails = require('../models/UserDetails');
 
+const { generateToken } = require("../middleware/generateToken");
+
 exports.createUserDetails = async (req, res) => {
   try {
     const {
@@ -14,8 +16,14 @@ exports.createUserDetails = async (req, res) => {
       totalAmount
     } = req.body;
 
+    // Extract userId from the token
+    const userId = req.user?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized. User ID not found in token." });
+    }
+
     const newDetails = new UserDetails({
-      userId: req.user.userId,
+      userId,
       customerName,
       phoneNumber,
       address,

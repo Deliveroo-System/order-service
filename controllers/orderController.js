@@ -1,5 +1,8 @@
 const Order = require("../models/orderModel");
 
+const { generateToken } = require("../middleware/generateToken");
+
+
 // ✅ Create a new order
 exports.createOrder = async (req, res) => {
   try {

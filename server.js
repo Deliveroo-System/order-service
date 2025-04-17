@@ -9,6 +9,14 @@ const socketIo = require("socket.io");
 const orderRoutes = require("./routes/orderRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userDetailsRoutes = require("./routes/userDetailsRoutes");
+ 
+const { generateToken, decodeToken } = require("./middleware/generateToken"); // Import the functions
+
+const token = generateToken("6800eeb68bddabe494aaf7f4", "uthara@gmail.com", "Customer");
+console.log("JWT Token:", token);
+
+const decoded = decodeToken(token);
+console.log("Decoded Token:", decoded);
 
 
 const app = express();
