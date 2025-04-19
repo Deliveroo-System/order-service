@@ -2,27 +2,27 @@ const Order = require("../models/orderModel");
 
 const { generateToken } = require("../middleware/generateToken");
 
-
 // ✅ Create a new order
 exports.createOrder = async (req, res) => {
   try {
-    const { customerName, customerEmail, foodItems, totalPrice } = req.body;
-    
-    console.log("Received order data:", req.body);
+    // Extract customer details from the authenticated user
+    const { userId, email } = req.user;
+    const { customerName, foodItems, totalPrice, address, paymentMethod, cardDetails } = req.body;
 
     const newOrder = new Order({
+      userId,
       customerName,
-      customerEmail,
+      customerEmail: email,
       foodItems,
       totalPrice,
+      address,
+      paymentMethod,
+      cardDetails
     });
 
-    const savedOrder = await newOrder.save(); // ✅ store saved document
-    console.log("Order saved:", savedOrder);  // ✅ log the saved order
-
+    const savedOrder = await newOrder.save();
     res.status(201).json({ message: "Order placed successfully", order: savedOrder });
   } catch (error) {
-    console.error("Error saving order:", error); // 👈 optional, helpful
     res.status(500).json({ error: error.message });
   }
 };

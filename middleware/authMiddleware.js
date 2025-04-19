@@ -1,28 +1,45 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-const authenticateToken = (req, res, next) => {
-  const token = req.headers["authorization"]?.split(" ")[1]; // Get token from Authorization header
-  if (!token) return res.status(401).json({ message: "Access denied. No token provided." });
+function authMiddleware(req, res, next) {
+    const authHeader = req.headers.authorization;
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) return res.status(401).json({ message: "Unauthorized. Invalid token." });
-
-    req.user = decoded; // Store decoded user info (sub, email, role) in req.user
-    next();
-  });
-};
-
-// Middleware to check if the user has the required roles
-const authorizeRoles = (...roles) => {
-  return (req, res, next) => {
-    const userRole = req.user?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]; // Extract role from token
-    const prefixedRoles = roles.map(role => `ROLE_${role.toUpperCase()}`); // Normalize roles to match ROLE_ format
-    if (!userRole || !prefixedRoles.includes(userRole)) {
-      return res.status(403).json({ message: "Access denied. Insufficient role." });
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Authorization token is missing or invalid' });
     }
-    next();
-  };
-};
 
-// Export authenticate middleware to use in routes
-module.exports = { authenticateToken, authorizeRoles };
+    const token = authHeader.split(' ')[1];
+    const secretKey = process.env.JWT_SECRET;
+
+    if (!secretKey) {
+        return res.status(500).json({ message: 'Server configuration error: missing secret key' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, secretKey);
+
+        req.user = {
+            userId: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
+            email: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],
+            role: decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+        };
+
+        console.log("Decoded user:", req.user);
+
+        next();
+    } catch (err) {
+        return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+}
+
+function authorizeRoles(...roles) {
+    return (req, res, next) => {
+        const userRole = req.user.role.replace("ROLE_", ""); // Remove "ROLE_" prefix if present
+        if (!roles.includes(userRole)) {
+            return res.status(403).json({ message: 'Access denied: insufficient permissions' });
+        }
+        next();
+    };
+}
+
+module.exports = { authMiddleware, authorizeRoles };

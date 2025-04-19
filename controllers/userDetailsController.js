@@ -1,7 +1,5 @@
 const UserDetails = require('../models/UserDetails');
 
-const { generateToken } = require("../middleware/generateToken");
-
 exports.createUserDetails = async (req, res) => {
   try {
     const {
@@ -16,12 +14,15 @@ exports.createUserDetails = async (req, res) => {
       totalAmount
     } = req.body;
 
-    // Extract userId from the token
-    const userId = req.user?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-    if (!userId) {
+    // Ensure req.user is populated by authMiddleware
+    if (!req.user || !req.user.userId) {
       return res.status(401).json({ message: "Unauthorized. User ID not found in token." });
     }
 
+    // Extract userId from req.user
+    const userId = req.user.userId;
+
+    // Create a new UserDetails document
     const newDetails = new UserDetails({
       userId,
       customerName,
@@ -35,9 +36,10 @@ exports.createUserDetails = async (req, res) => {
       totalAmount
     });
 
+    // Save the document to the database
     const savedDetails = await newDetails.save();
-    res.status(201).json(savedDetails);
+    res.status(201).json({ message: "User details saved successfully", userDetails: savedDetails });
   } catch (error) {
-    res.status(500).json({ message: 'Error saving user details', error });
+    res.status(500).json({ message: 'Error saving user details', error: error.message });
   }
 };
