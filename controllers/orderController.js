@@ -1,18 +1,17 @@
 const Order = require("../models/orderModel");
-
-const { generateToken } = require("../middleware/generateToken");
+const User = require("../models/userModel"); // Add this import
 
 // ✅ Create a new order
 exports.createOrder = async (req, res) => {
   try {
     // Extract customer details from the authenticated user
-    const { userId, email } = req.user;
+    const { userId, email } = req.user; // Destructure user details from the authenticated user
     const { customerName, foodItems, totalPrice, address, paymentMethod, cardDetails } = req.body;
 
     const newOrder = new Order({
       userId,
       customerName,
-      customerEmail: email,
+      customerEmail: email,  // Ensure this matches the field in your order model
       foodItems,
       totalPrice,
       address,
@@ -21,6 +20,14 @@ exports.createOrder = async (req, res) => {
     });
 
     const savedOrder = await newOrder.save();
+
+    // Update user with the last order ID
+    await User.findOneAndUpdate(
+      { email: email },  // Use email from the destructured user
+      { $set: { lastOrderId: savedOrder._id } },  // Update lastOrderId field in the User model
+      { new: true }
+    );
+
     res.status(201).json({ message: "Order placed successfully", order: savedOrder });
   } catch (error) {
     res.status(500).json({ error: error.message });

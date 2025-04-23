@@ -2,8 +2,13 @@ const mongoose = require('mongoose');
 
 const userDetailsSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'User',
+    required: true
+  },
+  orderId: {
+    type: String,
+    ref: 'Order',
     required: true
   },
   customerName: {
@@ -47,6 +52,46 @@ const userDetailsSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+
+  // Restaurant/Item details
+  restaurantId: String,
+  categoryId: String,
+  menuId: String,
+  menuItemId: String,
+  categoryName: String,
+  restaurantName: String,
+  restaurantDescription: String,
+  menuName: String,
+  menuItemName: String,
+
+  // Statuses
+  restaurantAdmin: {
+    type: String,
+    enum: ['Pending', 'Approved', 'Rejected'],
+    default: 'Pending'
+  },
+  deliver: {
+    type: String,
+    enum: ['Pending', 'Approved', 'Rejected'],
+    default: 'Pending'
+  },
+  customerOrderRecive: {
+    type: String,
+    enum: ['Pending', 'Success'],
+    default: 'Pending'
+  },
+
+  statusHistory: [
+    {
+      statusType: String,
+      value: String,
+      updatedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ],
+
   status: {
     type: String,
     default: 'Pending',
