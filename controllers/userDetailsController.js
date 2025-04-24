@@ -25,6 +25,7 @@ exports.createUserDetails = async (req, res) => {
       totalAmount: order.totalPrice,
 
       restaurantId: '',
+      deliveryId: '',
       categoryId: '',
       menuId: '',
       menuItemId: '',
@@ -74,28 +75,33 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    const update = {
-      [statusType]: value,
-      $push: {
-        statusHistory: {
-          statusType,
-          value,
-          updatedAt: new Date()
-        }
-      }
-    };
-
-    const updatedOrder = await UserDetails.findByIdAndUpdate(id, update, { new: true });
-
-    if (!updatedOrder) {
+    const order = await UserDetails.findById(id);
+    if (!order) {
       return res.status(404).json({ message: 'UserDetails not found' });
     }
 
-    res.status(200).json({ message: `${statusType} status updated`, order: updatedOrder });
+    // Update status field
+    order[statusType] = value;
+
+    // Push into statusHistory
+    order.statusHistory.push({
+      statusType,
+      value,
+      updatedAt: new Date()
+    });
+
+    // Save changes
+    await order.save();
+
+    res.status(200).json({
+      message: `${statusType} status updated to ${value}`,
+      order
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error updating status', error: error.message });
   }
 };
+
 
 exports.getUserDetailsById = async (req, res) => {
   try {

@@ -55,6 +55,7 @@ const userDetailsSchema = new mongoose.Schema({
 
   // Restaurant/Item details
   restaurantId: String,
+  deliveryId: String,
   categoryId: String,
   menuId: String,
   menuItemId: String,
