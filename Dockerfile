@@ -1,18 +1,19 @@
-# Use Node.js official image
-FROM node:18
+# Use a slim base image
+FROM node:18-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and install only production dependencies
+# Install only production dependencies
 COPY package.json package-lock.json ./
-RUN npm install --only=production
+COPY .env .env
+RUN npm install --omit=dev
 
-# Copy the entire project
+# Copy only necessary files
 COPY . .
 
 # Expose port
 EXPOSE 5000
 
-# Start the server
-CMD ["npm", "start"]
+# Run using node (not nodemon)
+CMD ["node", "server.js"]
