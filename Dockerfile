@@ -1,19 +1,20 @@
-# Use a slim base image
+# Use a slim Node.js base image
 FROM node:18-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install only production dependencies
+# Copy package.json and package-lock.json first for better caching
 COPY package.json package-lock.json ./
-COPY .env .env
+
+# Install only production dependencies
 RUN npm install --omit=dev
 
-# Copy only necessary files
+# Copy application files (including .env)
 COPY . .
 
 # Expose port
 EXPOSE 5000
 
-# Run using node (not nodemon)
+# Start the server using node
 CMD ["node", "server.js"]
