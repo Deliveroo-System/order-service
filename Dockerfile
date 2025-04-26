@@ -4,9 +4,9 @@ FROM node:18
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and install dependencies
+# Copy package.json and install only production dependencies
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm install --only=production
 
 # Copy the entire project
 COPY . .
@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 5000
 
 # Start the server
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
