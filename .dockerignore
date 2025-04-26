@@ -1,0 +1,24 @@
+# Node modules
+node_modules
+
+# Logs
+logs
+*.log
+
+# dotenv environment variable files
+.env
+
+# Dockerfile and docker-compose files
+Dockerfile
+docker-compose.yml
+
+# Git files
+.git
+.gitignore
+
+# Other unnecessary files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
