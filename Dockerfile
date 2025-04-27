@@ -12,7 +12,6 @@ RUN npm install --omit=dev
 
 # Copy application files (including .env)
 COPY . .
-
 # Expose port
 EXPOSE 5000
 
