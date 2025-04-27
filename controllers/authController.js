@@ -43,3 +43,73 @@ exports.loginUser = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.getAllUsers = async (req, res) => {
+    try {
+        // Check if the logged-in user is a restaurantAdmin
+        if (req.user.role.toLowerCase() !== "restaurantadmin") {
+            return res.status(403).json({ message: "Access denied: insufficient permissions" });
+        }
+
+        // Fetch all users from the database
+        const users = await User.find({}, "-password"); // Exclude password field for security
+        res.status(200).json({ users });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+ 
+// ✅ Update user details
+exports.updateUser = async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+
+        // Find the user by ID from the token
+        const user = await User.findById(req.user.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Ensure the user can only update their own data
+        if (user._id.toString() !== req.user.userId) {
+            return res.status(403).json({ message: "Access denied: You can only update your own data" });
+        }
+
+        // Update fields if provided
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (password) user.password = await bcrypt.hash(password, 10);
+        if (role) {
+            // Normalize role to match enum values
+            const normalizedRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+            if (!["Customer", "restaurantAdmin", "deliveryPersonnel"].includes(normalizedRole)) {
+                return res.status(400).json({ message: "Invalid role value" });
+            }
+            user.role = normalizedRole;
+        }
+
+        await user.save();
+        res.status(200).json({ message: "User updated successfully", user });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// ✅ Delete user account
+exports.deleteUser = async (req, res) => {
+    try {
+        // Find the user by ID from the token
+        const user = await User.findById(req.user.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Ensure the user can only delete their own account
+        if (user._id.toString() !== req.user.userId) {
+            return res.status(403).json({ message: "Access denied: You can only delete your own account" });
+        }
+
+        // Delete the user
+        await User.findByIdAndDelete(req.user.userId);
+        res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
