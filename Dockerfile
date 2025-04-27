@@ -1,3 +1,4 @@
+
  
 # Stage 1: build and install dependencies
 FROM node:18-alpine AS builder
@@ -46,3 +47,4 @@ EXPOSE 5000
 
 # Start the server using node
 CMD ["node", "server.js"] 
+
