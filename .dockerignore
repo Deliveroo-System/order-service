@@ -5,9 +5,6 @@ node_modules
 logs
 *.log
 
-# dotenv environment variable files
-.env
-
 # Dockerfile and docker-compose files
 Dockerfile
 docker-compose.yml
