@@ -107,17 +107,28 @@ exports.updateOrderStatus = async (req, res) => {
 // filepath: c:\Users\HP\Desktop\DS_Project\order-service\controllers\userDetailsController.js
 exports.getUserDetailsByUserId = async (req, res) => {
   try {
-      // Use the authenticated userId from authMiddleware
-      const userId = req.user.userId;
+      // Extract the authenticated userId from the token (via authMiddleware)
+      const tokenUserId = req.user.userId;
 
-      // First check if user exists
-      const user = await User.findById(userId);
+      // Extract the userId from the request parameters
+      const requestedUserId = req.params.id;
+
+      // Check if the requested userId matches the token userId
+      if (tokenUserId !== requestedUserId) {
+          return res.status(403).json({
+              success: false,
+              message: "Access denied: You can only view your own details"
+          });
+      }
+
+      // Fetch the logged-in user's details (only name and email)
+      const user = await User.findById(tokenUserId).select('name email');
       if (!user) {
           return res.status(404).json({ message: "User not found" });
       }
 
-      // Fetch all orders and details for the user
-      const userDetails = await UserDetails.find({ userId })
+      // Fetch all orders and details for the logged-in user
+      const userDetails = await UserDetails.find({ userId: tokenUserId })
           .populate('orderId')  // Populate order details if needed
           .select('-__v')       // Exclude version key
           .sort({ createdAt: -1 }); // Sort by latest first
@@ -128,6 +139,7 @@ exports.getUserDetailsByUserId = async (req, res) => {
           });
       }
 
+      // Respond with only the logged-in user's details
       res.status(200).json({
           success: true,
           user: {
