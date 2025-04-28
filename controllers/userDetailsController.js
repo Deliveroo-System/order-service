@@ -176,43 +176,35 @@ exports.getUserDetailsByUserId = async (req, res) => {
 // ✅ Get all order details with status: "Pending"
 exports.getPendingOrderDetails = async (req, res) => {
   try {
-    // Fetch all user details where status is "Pending"
-    const pendingOrders = await UserDetails.find({ 
+    const pendingOrders = await UserDetails.find({
       $and: [
-        { status: "Pending" }, // Ensure main status is "Pending"
-        { restaurantAdmin: "Pending" }, // Ensure restaurantAdmin status is "Pending"
-        { deliver: "Pending" }, // Ensure deliver status is "Pending"
-        { customerOrderRecive: "Pending" } // Ensure customerOrderRecive status is "Pending"
+        { status: "Pending" },
+        { restaurantAdmin: "Pending" },
+        { deliver: "Pending" },
+        { customerOrderRecive: "Pending" }
       ]
     })
-      .populate("orderId") // Populate order details if needed
-      .select("-__v") // Exclude version key
-      .sort({ createdAt: -1 }); // Sort by latest first
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
 
     if (!pendingOrders || pendingOrders.length === 0) {
       return res.status(404).json({ message: "No pending orders found" });
     }
 
-    // Respond with the pending orders
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = pendingOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
     res.status(200).json({
       success: true,
-      pendingOrders: pendingOrders.map(order => ({
-        orderId: order.orderId,
-        customerName: order.customerName,
-        phoneNumber: order.phoneNumber,
-        address: order.address,
-        city: order.city,
-        zipCode: order.zipCode,
-        paymentMethod: order.paymentMethod,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        status: {
-          restaurantAdmin: order.restaurantAdmin,
-          deliver: order.deliver,
-          customerOrderRecive: order.customerOrderRecive
-        },
-        statusHistory: order.statusHistory
-      }))
+      groupedByRestaurant
     });
   } catch (error) {
     res.status(500).json({
@@ -226,37 +218,28 @@ exports.getPendingOrderDetails = async (req, res) => {
 // ✅ Get all orders in UserDetails
 exports.getAllOrders = async (req, res) => {
   try {
-    // Fetch all user details
     const allOrders = await UserDetails.find()
-      .populate("orderId") // Populate order details if needed
-      .select("-__v") // Exclude version key
-      .sort({ createdAt: -1 }); // Sort by latest first
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
 
     if (!allOrders || allOrders.length === 0) {
       return res.status(404).json({ message: "No orders found" });
     }
 
-    // Respond with all orders
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = allOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
     res.status(200).json({
       success: true,
-      orders: allOrders.map(order => ({
-        orderId: order.orderId,
-        customerName: order.customerName,
-        phoneNumber: order.phoneNumber,
-        address: order.address,
-        city: order.city,
-        zipCode: order.zipCode,
-        paymentMethod: order.paymentMethod,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        status: {
-          restaurantAdmin: order.restaurantAdmin,
-          deliver: order.deliver,
-          customerOrderRecive: order.customerOrderRecive
-        },
-        statusHistory: order.statusHistory,
-        createdAt: order.createdAt
-      }))
+      groupedByRestaurant
     });
   } catch (error) {
     res.status(500).json({
@@ -270,37 +253,28 @@ exports.getAllOrders = async (req, res) => {
 // ✅ Get all orders with restaurantAdmin: "Approved"
 exports.getApprovedOrders = async (req, res) => {
   try {
-    // Fetch all user details where restaurantAdmin is "Approved"
     const approvedOrders = await UserDetails.find({ restaurantAdmin: "Approved" })
-      .populate("orderId") // Populate order details if needed
-      .select("-__v") // Exclude version key
-      .sort({ createdAt: -1 }); // Sort by latest first
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
 
     if (!approvedOrders || approvedOrders.length === 0) {
       return res.status(404).json({ message: "No approved orders found" });
     }
 
-    // Respond with the approved orders
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = approvedOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
     res.status(200).json({
       success: true,
-      approvedOrders: approvedOrders.map(order => ({
-        orderId: order.orderId,
-        customerName: order.customerName,
-        phoneNumber: order.phoneNumber,
-        address: order.address,
-        city: order.city,
-        zipCode: order.zipCode,
-        paymentMethod: order.paymentMethod,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        status: {
-          restaurantAdmin: order.restaurantAdmin,
-          deliver: order.deliver,
-          customerOrderRecive: order.customerOrderRecive
-        },
-        statusHistory: order.statusHistory,
-        createdAt: order.createdAt
-      }))
+      groupedByRestaurant
     });
   } catch (error) {
     res.status(500).json({
@@ -314,42 +288,33 @@ exports.getApprovedOrders = async (req, res) => {
 // ✅ Get all orders with restaurantAdmin: "Approved" and deliver: "Approved"
 exports.getAdminAndDeliverApprovedOrders = async (req, res) => {
   try {
-    // Fetch all user details where both restaurantAdmin and deliver are "Approved"
     const adminAndDeliverApprovedOrders = await UserDetails.find({
       $and: [
         { restaurantAdmin: "Approved" },
         { deliver: "Approved" }
       ]
     })
-      .populate("orderId") // Populate order details if needed
-      .select("-__v") // Exclude version key
-      .sort({ createdAt: -1 }); // Sort by latest first
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
 
     if (!adminAndDeliverApprovedOrders || adminAndDeliverApprovedOrders.length === 0) {
       return res.status(404).json({ message: "No orders found with both admin and deliver approved" });
     }
 
-    // Respond with the orders
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = adminAndDeliverApprovedOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
     res.status(200).json({
       success: true,
-      orders: adminAndDeliverApprovedOrders.map(order => ({
-        orderId: order.orderId,
-        customerName: order.customerName,
-        phoneNumber: order.phoneNumber,
-        address: order.address,
-        city: order.city,
-        zipCode: order.zipCode,
-        paymentMethod: order.paymentMethod,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        status: {
-          restaurantAdmin: order.restaurantAdmin,
-          deliver: order.deliver,
-          customerOrderRecive: order.customerOrderRecive
-        },
-        statusHistory: order.statusHistory,
-        createdAt: order.createdAt
-      }))
+      groupedByRestaurant
     });
   } catch (error) {
     res.status(500).json({
@@ -363,7 +328,6 @@ exports.getAdminAndDeliverApprovedOrders = async (req, res) => {
 // ✅ Get all orders with restaurantAdmin: "Approved", deliver: "Approved", and customerOrderRecive: "Success"
 exports.getFullyApprovedOrders = async (req, res) => {
   try {
-    // Fetch all user details where all conditions are met
     const fullyApprovedOrders = await UserDetails.find({
       $and: [
         { restaurantAdmin: "Approved" },
@@ -371,35 +335,27 @@ exports.getFullyApprovedOrders = async (req, res) => {
         { customerOrderRecive: "Success" }
       ]
     })
-      .populate("orderId") // Populate order details if needed
-      .select("-__v") // Exclude version key
-      .sort({ createdAt: -1 }); // Sort by latest first
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
 
     if (!fullyApprovedOrders || fullyApprovedOrders.length === 0) {
       return res.status(404).json({ message: "No fully approved orders found" });
     }
 
-    // Respond with the fully approved orders
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = fullyApprovedOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
     res.status(200).json({
       success: true,
-      orders: fullyApprovedOrders.map(order => ({
-        orderId: order.orderId,
-        customerName: order.customerName,
-        phoneNumber: order.phoneNumber,
-        address: order.address,
-        city: order.city,
-        zipCode: order.zipCode,
-        paymentMethod: order.paymentMethod,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        status: {
-          restaurantAdmin: order.restaurantAdmin,
-          deliver: order.deliver,
-          customerOrderRecive: order.customerOrderRecive
-        },
-        statusHistory: order.statusHistory,
-        createdAt: order.createdAt
-      }))
+      groupedByRestaurant
     });
   } catch (error) {
     res.status(500).json({
