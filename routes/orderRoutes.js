@@ -13,4 +13,7 @@ router.delete("/:id", authenticateToken, authorizeRoles("RESTAURANTADMIN"), orde
 // ✅ Route to get all pending order details
 router.get("/details/pending", authenticateToken, authorizeRoles("RESTAURANTADMIN"), userDetailsController.getPendingOrderDetails);
 
+// ✅ Route to get all orders
+router.get("/details/all", authenticateToken, authorizeRoles("RESTAURANTADMIN"), userDetailsController.getAllOrders);
+
 module.exports = router;
