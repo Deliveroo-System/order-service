@@ -1,5 +1,6 @@
 const Order = require('../models/orderModel');
 const UserDetails = require('../models/UserDetails');
+const User = require("../models/userModel"); 
 
 exports.createUserDetails = async (req, res) => {
   try {
@@ -103,17 +104,59 @@ exports.updateOrderStatus = async (req, res) => {
 };
 
 
-exports.getUserDetailsById = async (req, res) => {
+// filepath: c:\Users\HP\Desktop\DS_Project\order-service\controllers\userDetailsController.js
+exports.getUserDetailsByUserId = async (req, res) => {
   try {
-    const { id } = req.params;
-    const order = await UserDetails.findById(id);
+      // Use the authenticated userId from authMiddleware
+      const userId = req.user.userId;
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
+      // First check if user exists
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).json({ message: "User not found" });
+      }
 
-    res.status(200).json({ userDetails: order });
+      // Fetch all orders and details for the user
+      const userDetails = await UserDetails.find({ userId })
+          .populate('orderId')  // Populate order details if needed
+          .select('-__v')       // Exclude version key
+          .sort({ createdAt: -1 }); // Sort by latest first
+
+      if (!userDetails || userDetails.length === 0) {
+          return res.status(404).json({ 
+              message: "No order details found for this user"
+          });
+      }
+
+      res.status(200).json({
+          success: true,
+          user: {
+              name: user.name,
+              email: user.email
+          },
+          orderDetails: userDetails.map(detail => ({
+              orderId: detail.orderId,
+              customerName: detail.customerName,
+              phoneNumber: detail.phoneNumber,
+              address: detail.address,
+              city: detail.city,
+              zipCode: detail.zipCode,
+              paymentMethod: detail.paymentMethod,
+              items: detail.items,
+              totalAmount: detail.totalAmount,
+              status: {
+                  restaurantAdmin: detail.restaurantAdmin,
+                  deliver: detail.deliver,
+                  customerOrderRecive: detail.customerOrderRecive
+              },
+              statusHistory: detail.statusHistory
+          }))
+      });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching order', error: error.message });
+      res.status(500).json({ 
+          success: false, 
+          message: "Error fetching user details", 
+          error: error.message 
+      });
   }
 };
