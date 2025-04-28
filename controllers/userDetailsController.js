@@ -172,3 +172,53 @@ exports.getUserDetailsByUserId = async (req, res) => {
       });
   }
 };
+
+// ✅ Get all order details with status: "Pending"
+exports.getPendingOrderDetails = async (req, res) => {
+  try {
+    // Fetch all user details where status is "Pending"
+    const pendingOrders = await UserDetails.find({ 
+      $and: [
+        { status: "Pending" }, // Ensure main status is "Pending"
+        { restaurantAdmin: "Pending" }, // Ensure restaurantAdmin status is "Pending"
+        { deliver: "Pending" }, // Ensure deliver status is "Pending"
+        { customerOrderRecive: "Pending" } // Ensure customerOrderRecive status is "Pending"
+      ]
+    })
+      .populate("orderId") // Populate order details if needed
+      .select("-__v") // Exclude version key
+      .sort({ createdAt: -1 }); // Sort by latest first
+
+    if (!pendingOrders || pendingOrders.length === 0) {
+      return res.status(404).json({ message: "No pending orders found" });
+    }
+
+    // Respond with the pending orders
+    res.status(200).json({
+      success: true,
+      pendingOrders: pendingOrders.map(order => ({
+        orderId: order.orderId,
+        customerName: order.customerName,
+        phoneNumber: order.phoneNumber,
+        address: order.address,
+        city: order.city,
+        zipCode: order.zipCode,
+        paymentMethod: order.paymentMethod,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        status: {
+          restaurantAdmin: order.restaurantAdmin,
+          deliver: order.deliver,
+          customerOrderRecive: order.customerOrderRecive
+        },
+        statusHistory: order.statusHistory
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching pending orders",
+      error: error.message
+    });
+  }
+};
