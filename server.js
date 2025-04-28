@@ -12,10 +12,10 @@ const userDetailsRoutes = require("./routes/userDetailsRoutes");
 const { generateToken } = require("./middleware/generateToken");
 
 // Call the generateToken function
-const token = generateToken("Customer", "6800eeb68bddabe494aaf7f4", "uthara@gmail.com");
+//const token = generateToken("Customer", "6800eeb68bddabe494aaf7f4", "uthara@gmail.com");
 
 // Log the generated token
-console.log(token);
+//console.log(token);
 
 const app = express();
 const server = http.createServer(app);
