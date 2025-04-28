@@ -16,4 +16,7 @@ router.get("/details/pending", authenticateToken, authorizeRoles("RESTAURANTADMI
 // ✅ Route to get all orders
 router.get("/details/all", authenticateToken, authorizeRoles("RESTAURANTADMIN"), userDetailsController.getAllOrders);
 
+// ✅ Route to get all approved orders
+router.get("/details/approved", authenticateToken, authorizeRoles("RESTAURANTADMIN"), userDetailsController.getApprovedOrders);
+
 module.exports = router;

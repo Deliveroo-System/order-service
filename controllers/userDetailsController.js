@@ -266,3 +266,47 @@ exports.getAllOrders = async (req, res) => {
     });
   }
 };
+
+// ✅ Get all orders with restaurantAdmin: "Approved"
+exports.getApprovedOrders = async (req, res) => {
+  try {
+    // Fetch all user details where restaurantAdmin is "Approved"
+    const approvedOrders = await UserDetails.find({ restaurantAdmin: "Approved" })
+      .populate("orderId") // Populate order details if needed
+      .select("-__v") // Exclude version key
+      .sort({ createdAt: -1 }); // Sort by latest first
+
+    if (!approvedOrders || approvedOrders.length === 0) {
+      return res.status(404).json({ message: "No approved orders found" });
+    }
+
+    // Respond with the approved orders
+    res.status(200).json({
+      success: true,
+      approvedOrders: approvedOrders.map(order => ({
+        orderId: order.orderId,
+        customerName: order.customerName,
+        phoneNumber: order.phoneNumber,
+        address: order.address,
+        city: order.city,
+        zipCode: order.zipCode,
+        paymentMethod: order.paymentMethod,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        status: {
+          restaurantAdmin: order.restaurantAdmin,
+          deliver: order.deliver,
+          customerOrderRecive: order.customerOrderRecive
+        },
+        statusHistory: order.statusHistory,
+        createdAt: order.createdAt
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching approved orders",
+      error: error.message
+    });
+  }
+};
