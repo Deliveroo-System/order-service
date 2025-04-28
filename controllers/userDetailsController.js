@@ -310,3 +310,102 @@ exports.getApprovedOrders = async (req, res) => {
     });
   }
 };
+
+// ✅ Get all orders with restaurantAdmin: "Approved" and deliver: "Approved"
+exports.getAdminAndDeliverApprovedOrders = async (req, res) => {
+  try {
+    // Fetch all user details where both restaurantAdmin and deliver are "Approved"
+    const adminAndDeliverApprovedOrders = await UserDetails.find({
+      $and: [
+        { restaurantAdmin: "Approved" },
+        { deliver: "Approved" }
+      ]
+    })
+      .populate("orderId") // Populate order details if needed
+      .select("-__v") // Exclude version key
+      .sort({ createdAt: -1 }); // Sort by latest first
+
+    if (!adminAndDeliverApprovedOrders || adminAndDeliverApprovedOrders.length === 0) {
+      return res.status(404).json({ message: "No orders found with both admin and deliver approved" });
+    }
+
+    // Respond with the orders
+    res.status(200).json({
+      success: true,
+      orders: adminAndDeliverApprovedOrders.map(order => ({
+        orderId: order.orderId,
+        customerName: order.customerName,
+        phoneNumber: order.phoneNumber,
+        address: order.address,
+        city: order.city,
+        zipCode: order.zipCode,
+        paymentMethod: order.paymentMethod,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        status: {
+          restaurantAdmin: order.restaurantAdmin,
+          deliver: order.deliver,
+          customerOrderRecive: order.customerOrderRecive
+        },
+        statusHistory: order.statusHistory,
+        createdAt: order.createdAt
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching orders with both admin and deliver approved",
+      error: error.message
+    });
+  }
+};
+
+// ✅ Get all orders with restaurantAdmin: "Approved", deliver: "Approved", and customerOrderRecive: "Success"
+exports.getFullyApprovedOrders = async (req, res) => {
+  try {
+    // Fetch all user details where all conditions are met
+    const fullyApprovedOrders = await UserDetails.find({
+      $and: [
+        { restaurantAdmin: "Approved" },
+        { deliver: "Approved" },
+        { customerOrderRecive: "Success" }
+      ]
+    })
+      .populate("orderId") // Populate order details if needed
+      .select("-__v") // Exclude version key
+      .sort({ createdAt: -1 }); // Sort by latest first
+
+    if (!fullyApprovedOrders || fullyApprovedOrders.length === 0) {
+      return res.status(404).json({ message: "No fully approved orders found" });
+    }
+
+    // Respond with the fully approved orders
+    res.status(200).json({
+      success: true,
+      orders: fullyApprovedOrders.map(order => ({
+        orderId: order.orderId,
+        customerName: order.customerName,
+        phoneNumber: order.phoneNumber,
+        address: order.address,
+        city: order.city,
+        zipCode: order.zipCode,
+        paymentMethod: order.paymentMethod,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        status: {
+          restaurantAdmin: order.restaurantAdmin,
+          deliver: order.deliver,
+          customerOrderRecive: order.customerOrderRecive
+        },
+        statusHistory: order.statusHistory,
+        createdAt: order.createdAt
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching fully approved orders",
+      error: error.message
+    });
+  }
+};

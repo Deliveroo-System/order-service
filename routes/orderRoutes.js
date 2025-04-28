@@ -19,4 +19,10 @@ router.get("/details/all", authenticateToken, authorizeRoles("RESTAURANTADMIN"),
 // ✅ Route to get all approved orders
 router.get("/details/approved", authenticateToken, authorizeRoles("RESTAURANTADMIN"), userDetailsController.getApprovedOrders);
 
+// ✅ Route to get all orders with both admin and deliver approved
+router.get("/details/admin-deliver-approved", authenticateToken, authorizeRoles("RESTAURANTADMIN"), userDetailsController.getAdminAndDeliverApprovedOrders);
+
+// ✅ Route to get all fully approved orders
+router.get("/details/fully-approved", authenticateToken, authorizeRoles("RESTAURANTADMIN"), userDetailsController.getFullyApprovedOrders);
+
 module.exports = router;
