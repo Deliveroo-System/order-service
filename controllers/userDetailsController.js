@@ -4,46 +4,82 @@ const User = require("../models/userModel");
 
 exports.createUserDetails = async (req, res) => {
   try {
-    const { orderId, phoneNumber, address, city, zipCode, paymentMethod } = req.body;
-
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
-
-    const userDetails = await UserDetails.create({
-      userId: req.user.userId,
-      orderId: order._id, // Link to order
-      customerName: order.customerName,
+    const {
+      orderId,
+      deliveryId,
+      customerName,
       phoneNumber,
       address,
       city,
       zipCode,
       paymentMethod,
-      items: order.foodItems.map(item => ({
-        name: item.name,
-        qty: item.quantity,
-        price: item.price
-      })),
-      totalAmount: order.totalPrice,
+      menus, // Array of menus, each containing items
+      totalAmount,
+      restaurantId,
+      categoryId,
+      categoryName,
+      restaurantName,
+      restaurantDescription,
+      restaurantAdmin,
+      deliver,
+      customerOrderRecive,
+      statusHistory
+    } = req.body;
 
-      restaurantId: '',
-      deliveryId: '',
-      categoryId: '',
-      menuId: '',
-      menuItemId: '',
-      categoryName: '',
-      restaurantName: '',
-      restaurantDescription: '',
-      menuName: '',
-      menuItemName: '',
+    // Validate required fields
+    if (!orderId || !menus || !Array.isArray(menus) || menus.length === 0) {
+      return res.status(400).json({
+        message: "Order ID and menus are required, and menus should be a non-empty array."
+      });
+    }
 
-      restaurantAdmin: 'Pending',
-      deliver: 'Pending',
-      customerOrderRecive: 'Pending',
-      statusHistory: []
+    // Ensure each menu and its items have the required fields
+    for (const menu of menus) {
+      if (!menu.menuId || !menu.menuName || !menu.items || !Array.isArray(menu.items) || menu.items.length === 0) {
+        return res.status(400).json({
+          message: "Each menu must include menuId, menuName, and a non-empty items array."
+        });
+      }
+      for (const item of menu.items) {
+        if (!item.menuItemId || !item.menuItemName || item.qty == null || item.price == null) {
+          return res.status(400).json({
+            message: "Each item must include menuItemId, menuItemName, qty, and price."
+          });
+        }
+      }
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    // Create the user details document
+    const userDetails = await UserDetails.create({
+      userId: req.user.userId,
+      orderId,
+      deliveryId,
+      customerName,
+      phoneNumber,
+      address,
+      city,
+      zipCode,
+      paymentMethod,
+      menus, // Save the array of menus with items
+      totalAmount,
+      restaurantId,
+      categoryId,
+      categoryName,
+      restaurantName,
+      restaurantDescription,
+      restaurantAdmin: restaurantAdmin || 'Pending',
+      deliver: deliver || 'Pending',
+      customerOrderRecive: customerOrderRecive || 'Pending',
+      statusHistory: statusHistory || [],
+      status: 'Pending',
+      createdAt: new Date()
     });
 
     res.status(201).json({
-      message: "User details created from order",
+      message: "User details created successfully.",
       userDetails
     });
   } catch (error) {
@@ -176,43 +212,35 @@ exports.getUserDetailsByUserId = async (req, res) => {
 // ✅ Get all order details with status: "Pending"
 exports.getPendingOrderDetails = async (req, res) => {
   try {
-    // Fetch all user details where status is "Pending"
-    const pendingOrders = await UserDetails.find({ 
+    const pendingOrders = await UserDetails.find({
       $and: [
-        { status: "Pending" }, // Ensure main status is "Pending"
-        { restaurantAdmin: "Pending" }, // Ensure restaurantAdmin status is "Pending"
-        { deliver: "Pending" }, // Ensure deliver status is "Pending"
-        { customerOrderRecive: "Pending" } // Ensure customerOrderRecive status is "Pending"
+        { status: "Pending" },
+        { restaurantAdmin: "Pending" },
+        { deliver: "Pending" },
+        { customerOrderRecive: "Pending" }
       ]
     })
-      .populate("orderId") // Populate order details if needed
-      .select("-__v") // Exclude version key
-      .sort({ createdAt: -1 }); // Sort by latest first
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
 
     if (!pendingOrders || pendingOrders.length === 0) {
       return res.status(404).json({ message: "No pending orders found" });
     }
 
-    // Respond with the pending orders
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = pendingOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
     res.status(200).json({
       success: true,
-      pendingOrders: pendingOrders.map(order => ({
-        orderId: order.orderId,
-        customerName: order.customerName,
-        phoneNumber: order.phoneNumber,
-        address: order.address,
-        city: order.city,
-        zipCode: order.zipCode,
-        paymentMethod: order.paymentMethod,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        status: {
-          restaurantAdmin: order.restaurantAdmin,
-          deliver: order.deliver,
-          customerOrderRecive: order.customerOrderRecive
-        },
-        statusHistory: order.statusHistory
-      }))
+      groupedByRestaurant
     });
   } catch (error) {
     res.status(500).json({
@@ -226,42 +254,149 @@ exports.getPendingOrderDetails = async (req, res) => {
 // ✅ Get all orders in UserDetails
 exports.getAllOrders = async (req, res) => {
   try {
-    // Fetch all user details
     const allOrders = await UserDetails.find()
-      .populate("orderId") // Populate order details if needed
-      .select("-__v") // Exclude version key
-      .sort({ createdAt: -1 }); // Sort by latest first
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
 
     if (!allOrders || allOrders.length === 0) {
       return res.status(404).json({ message: "No orders found" });
     }
 
-    // Respond with all orders
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = allOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
     res.status(200).json({
       success: true,
-      orders: allOrders.map(order => ({
-        orderId: order.orderId,
-        customerName: order.customerName,
-        phoneNumber: order.phoneNumber,
-        address: order.address,
-        city: order.city,
-        zipCode: order.zipCode,
-        paymentMethod: order.paymentMethod,
-        items: order.items,
-        totalAmount: order.totalAmount,
-        status: {
-          restaurantAdmin: order.restaurantAdmin,
-          deliver: order.deliver,
-          customerOrderRecive: order.customerOrderRecive
-        },
-        statusHistory: order.statusHistory,
-        createdAt: order.createdAt
-      }))
+      groupedByRestaurant
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Error fetching all orders",
+      error: error.message
+    });
+  }
+};
+
+// ✅ Get all orders with restaurantAdmin: "Approved"
+exports.getApprovedOrders = async (req, res) => {
+  try {
+    const approvedOrders = await UserDetails.find({ restaurantAdmin: "Approved" })
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
+
+    if (!approvedOrders || approvedOrders.length === 0) {
+      return res.status(404).json({ message: "No approved orders found" });
+    }
+
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = approvedOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
+    res.status(200).json({
+      success: true,
+      groupedByRestaurant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching approved orders",
+      error: error.message
+    });
+  }
+};
+
+// ✅ Get all orders with restaurantAdmin: "Approved" and deliver: "Approved"
+exports.getAdminAndDeliverApprovedOrders = async (req, res) => {
+  try {
+    const adminAndDeliverApprovedOrders = await UserDetails.find({
+      $and: [
+        { restaurantAdmin: "Approved" },
+        { deliver: "Approved" }
+      ]
+    })
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
+
+    if (!adminAndDeliverApprovedOrders || adminAndDeliverApprovedOrders.length === 0) {
+      return res.status(404).json({ message: "No orders found with both admin and deliver approved" });
+    }
+
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = adminAndDeliverApprovedOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
+    res.status(200).json({
+      success: true,
+      groupedByRestaurant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching orders with both admin and deliver approved",
+      error: error.message
+    });
+  }
+};
+
+// ✅ Get all orders with restaurantAdmin: "Approved", deliver: "Approved", and customerOrderRecive: "Success"
+exports.getFullyApprovedOrders = async (req, res) => {
+  try {
+    const fullyApprovedOrders = await UserDetails.find({
+      $and: [
+        { restaurantAdmin: "Approved" },
+        { deliver: "Approved" },
+        { customerOrderRecive: "Success" }
+      ]
+    })
+      .populate("orderId")
+      .select("-__v")
+      .sort({ createdAt: -1 });
+
+    if (!fullyApprovedOrders || fullyApprovedOrders.length === 0) {
+      return res.status(404).json({ message: "No fully approved orders found" });
+    }
+
+    // Group orders by restaurantId and exclude "Unknown"
+    const groupedByRestaurant = fullyApprovedOrders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (restaurantId) { // Only include valid restaurantId
+        if (!acc[restaurantId]) acc[restaurantId] = [];
+        acc[restaurantId].push(order);
+      }
+      return acc;
+    }, {});
+
+    res.status(200).json({
+      success: true,
+      groupedByRestaurant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching fully approved orders",
       error: error.message
     });
   }
