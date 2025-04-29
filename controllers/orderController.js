@@ -1,17 +1,17 @@
 const Order = require("../models/orderModel");
-const User = require("../models/userModel"); // Add this import
+const User = require("../models/userModel");  
 
-// ✅ Create a new order
+// Create a new order
 exports.createOrder = async (req, res) => {
   try {
-    // Extract customer details from the authenticated user
-    const { userId, email } = req.user; // Destructure user details from the authenticated user
+     
+    const { userId, email } = req.user;  
     const { customerName, foodItems, totalPrice, address, paymentMethod, cardDetails } = req.body;
 
     const newOrder = new Order({
       userId,
       customerName,
-      customerEmail: email,  // Ensure this matches the field in your order model
+      customerEmail: email,   
       foodItems,
       totalPrice,
       address,
@@ -21,10 +21,10 @@ exports.createOrder = async (req, res) => {
 
     const savedOrder = await newOrder.save();
 
-    // Update user with the last order ID
+     
     await User.findOneAndUpdate(
-      { email: email },  // Use email from the destructured user
-      { $set: { lastOrderId: savedOrder._id } },  // Update lastOrderId field in the User model
+      { email: email },  
+      { $set: { lastOrderId: savedOrder._id } }, 
       { new: true }
     );
 
@@ -34,7 +34,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// ✅ Get order by ID
+// Get order by ID
 exports.getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -46,7 +46,7 @@ exports.getOrderById = async (req, res) => {
   }
 };
 
-// ✅ Get all orders
+// Get all orders
 exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find();
@@ -56,7 +56,7 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
-// ✅ Update order status
+// Update order status
 exports.updateOrderStatus = async (req, res) => {
     try {
       const { status } = req.body;
@@ -64,7 +64,7 @@ exports.updateOrderStatus = async (req, res) => {
   
       if (!order) return res.status(404).json({ message: "Order not found" });
   
-      // Emit real-time order status update
+      
       const io = req.app.get("io");
       io.emit("orderStatusUpdated", { orderId: order._id, status });
   
@@ -75,7 +75,7 @@ exports.updateOrderStatus = async (req, res) => {
   };
   
 
-// ✅ Delete an order
+// Delete an order
 exports.deleteOrder = async (req, res) => {
   try {
     const order = await Order.findByIdAndDelete(req.params.id);

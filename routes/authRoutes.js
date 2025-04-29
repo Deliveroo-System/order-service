@@ -5,7 +5,7 @@ const authController = require("../controllers/authController");
 
 const { authMiddleware , authorizeRoles} = require('../middleware/authMiddleware');
 
-// ✅ Register Route
+// Register Route
 router.post(
   "/register",
   [
@@ -16,15 +16,15 @@ router.post(
   authController.registerUser
 );
 
-// ✅ Login Route
+// Login Route
 router.post("/login", authController.loginUser);
 
 router.get("/users", authMiddleware, authorizeRoles("restaurantAdmin"), authController.getAllUsers);
 
-// ✅ Update user details
+// Update user details
 router.put("/update", authMiddleware, authorizeRoles("Customer") ,authController.updateUser);
 
-// ✅ Delete user account
+// Delete user account
 router.delete("/delete", authMiddleware, authorizeRoles("Customer") , authController.deleteUser);
 
 

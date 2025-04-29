@@ -53,7 +53,7 @@ const userDetailsSchema = new mongoose.Schema({
     required: true,
   },
 
-  // Restaurant/Item details
+   
   restaurantId: String,
   deliveryId: String,
   categoryId: String,
@@ -72,7 +72,7 @@ const userDetailsSchema = new mongoose.Schema({
     }
   ],
 
-  // Statuses
+   
   restaurantAdmin: {
     type: String,
     enum: ['Pending', 'Approved', 'Rejected'],
