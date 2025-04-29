@@ -16,7 +16,6 @@ const { generateToken } = require("./middleware/generateToken");
 
 // Log the generated token
 //console.log(token);
-
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
