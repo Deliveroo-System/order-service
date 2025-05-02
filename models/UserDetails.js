@@ -31,7 +31,7 @@ const userDetailsSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['Cash on Delivery', 'Card', 'PayPal'], // Updated enum values
+    enum: ['Cash on Delivery', 'Card', 'PayPal'], 
     default: 'Cash on Delivery',
   },
   cardDetails: {
@@ -39,7 +39,7 @@ const userDetailsSchema = new mongoose.Schema({
     expiryDate: { type: String },
     cvv: { type: String },
   },
-  paymentId: { // Add this field to store PayPal transaction ID if needed
+  paymentId: { 
     type: String,
   },
   items: [
