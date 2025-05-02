@@ -2,13 +2,11 @@ const mongoose = require('mongoose');
 
 const userDetailsSchema = new mongoose.Schema({
   userId: {
-    type: String,
-    ref: 'User',
+    type: String, 
     required: true
   },
   orderId: {
-    type: String,
-    ref: 'Order',
+    type: String, 
     required: true
   },
   customerName: {
@@ -33,13 +31,16 @@ const userDetailsSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['Cash', 'Card'],
-    default: 'Cash',
+    enum: ['Cash on Delivery', 'Card', 'PayPal'], // Updated enum values
+    default: 'Cash on Delivery',
   },
   cardDetails: {
     cardNumber: { type: String },
     expiryDate: { type: String },
     cvv: { type: String },
+  },
+  paymentId: { // Add this field to store PayPal transaction ID if needed
+    type: String,
   },
   items: [
     {

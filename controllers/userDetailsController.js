@@ -4,38 +4,59 @@ const User = require("../models/userModel");
 
 exports.createUserDetails = async (req, res) => {
   try {
-    const { orderId, phoneNumber, address, city, zipCode, paymentMethod } = req.body;
-
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
-
-    const userDetails = await UserDetails.create({
-      userId: req.user.userId,
-      orderId: order._id, // Link to order
-      customerName: order.customerName,
+    const { 
+      orderId,
+      deliveryId,
+      customerName,
       phoneNumber,
       address,
       city,
       zipCode,
       paymentMethod,
-      items: order.foodItems.map(item => ({
-        name: item.name,
-        qty: item.quantity,
-        price: item.price
-      })),
-      totalAmount: order.totalPrice,
+      cardDetails,
+      paymentId, // Add paymentId to capture PayPal transaction ID
+      items,
+      totalAmount,
+      restaurantId,
+      restaurantName
+    } = req.body;
 
-      restaurantId: '',
-      deliveryId: '',
-      categoryId: '',
-      menuId: '',
-      menuItemId: '',
-      categoryName: '',
-      restaurantName: '',
-      restaurantDescription: '',
-      menuName: '',
-      menuItemName: '',
+    // Basic validation
+    if (!orderId || !customerName || !phoneNumber || !address) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
 
+    // Determine payment method label based on what was sent
+    let paymentMethodLabel;
+    if (paymentMethod === 'paypal') {
+      paymentMethodLabel = 'PayPal';
+    } else if (paymentMethod === 'cod') {
+      paymentMethodLabel = 'Cash on Delivery';
+    } else {
+      paymentMethodLabel = paymentMethod || 'Cash on Delivery';
+    }
+
+    const userDetails = await UserDetails.create({
+      userId: req.user.userId,
+      orderId,
+      deliveryId: deliveryId || '',
+      customerName,
+      phoneNumber,
+      address,
+      city: city || 'Not specified',
+      zipCode: zipCode || 'Not specified',
+      paymentMethod: paymentMethodLabel,
+      paymentId: paymentId || undefined, // Store PayPal transaction ID if available
+      cardDetails: paymentMethod === 'paypal' ? {
+        cardNumber: "via PayPal", // Placeholder since we don't get real card details
+        expiryDate: "via PayPal",
+        cvv: "via PayPal"
+      } : cardDetails || null,
+      items: items || [],
+      totalAmount: totalAmount || 0,
+      restaurantId: restaurantId || '',
+      restaurantName: restaurantName || 'Unknown Restaurant',
+      // Set default values for other fields
       restaurantAdmin: 'Pending',
       deliver: 'Pending',
       customerOrderRecive: 'Pending',
@@ -43,14 +64,18 @@ exports.createUserDetails = async (req, res) => {
     });
 
     res.status(201).json({
-      message: "User details created from order",
+      message: "User details created successfully",
       userDetails
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating user details', error: error.message });
+    console.error('Error creating user details:', error);
+    res.status(500).json({ 
+      message: 'Error creating user details',
+      error: error.message,
+      stack: error.stack
+    });
   }
 };
-
 // userDetailsController.js
 exports.updateOrderStatus = async (req, res) => {
   try {
