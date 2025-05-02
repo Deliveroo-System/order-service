@@ -31,9 +31,9 @@ exports.createUserDetails = async (req, res) => {
     if (paymentMethod === 'paypal') {
       paymentMethodLabel = 'PayPal';
     } else if (paymentMethod === 'cod') {
-      paymentMethodLabel = 'Cash on Delivery';
+      paymentMethodLabel = 'Cash';
     } else {
-      paymentMethodLabel = paymentMethod || 'Cash on Delivery';
+      paymentMethodLabel = paymentMethod || 'Cash';
     }
 
     const userDetails = await UserDetails.create({

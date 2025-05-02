@@ -31,8 +31,8 @@ const userDetailsSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['Cash on Delivery', 'Card', 'PayPal'], 
-    default: 'Cash on Delivery',
+    enum: ['Cash', 'Card', 'PayPal'], 
+    default: 'Cash',
   },
   cardDetails: {
     cardNumber: { type: String },
