@@ -34,9 +34,9 @@ function authMiddleware(req, res, next) {
 
 function authorizeRoles(...roles) {
     return (req, res, next) => {
-        // Bypass role checks and allow all tokens
-        next();
+       
+      next();
     };
-}
+  }
   
 module.exports = { authMiddleware, authorizeRoles };
