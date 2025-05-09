@@ -277,7 +277,7 @@ exports.getAllOrders = async (req, res) => {
 // Get all orders with restaurantAdmin: "Approved"
 exports.getApprovedOrders = async (req, res) => {
   try {
-    const approvedOrders = await UserDetails.find({ restaurantAdmin: "Approved" })
+    const approvedOrders = await UserDetails.find({ RestaurantOwner: "Approved" })
       .populate("orderId")
       .select("-__v")
       .sort({ createdAt: -1 });
@@ -314,7 +314,7 @@ exports.getAdminAndDeliverApprovedOrders = async (req, res) => {
   try {
     const adminAndDeliverApprovedOrders = await UserDetails.find({
       $and: [
-        { restaurantAdmin: "Approved" },
+        { RestaurantOwner: "Approved" },
         { deliver: "Approved" }
       ]
     })
@@ -353,7 +353,7 @@ exports.getFullyApprovedOrders = async (req, res) => {
   try {
     const fullyApprovedOrders = await UserDetails.find({
       $and: [
-        { restaurantAdmin: "Approved" },
+        { RestaurantOwner: "Approved" },
         { deliver: "Approved" },
         { customerOrderRecive: "Success" }
       ]
