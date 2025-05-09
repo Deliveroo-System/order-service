@@ -182,7 +182,7 @@ exports.getUserDetailsByUserId = async (req, res) => {
               items: detail.items,
               totalAmount: detail.totalAmount,
               status: {
-                  restaurantAdmin: detail.restaurantAdmin,
+                  restaurantAdmin: detail.RestaurantOwner,
                   deliver: detail.deliver,
                   customerOrderRecive: detail.customerOrderRecive
               },
@@ -204,7 +204,7 @@ exports.getPendingOrderDetails = async (req, res) => {
     const pendingOrders = await UserDetails.find({
       $and: [
         { status: "Pending" },
-        { restaurantAdmin: "Pending" },
+        { RestaurantOwner: "Pending" },
         { deliver: "Pending" },
         { customerOrderRecive: "Pending" }
       ]
