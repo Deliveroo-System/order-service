@@ -89,7 +89,8 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(400).json({ message: 'Invalid status type' });
     }
 
-    const userRole = req.user.role.toLowerCase();
+    const userRole = req.user.role;
+
     const rolePermissions = {
       restaurantadmin: 'RestaurantOwner',
       deliver: 'deliver',
