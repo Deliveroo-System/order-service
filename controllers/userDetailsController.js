@@ -84,14 +84,14 @@ exports.updateOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { statusType, value } = req.body;
 
-    const allowedTypes = ['restaurantAdmin', 'deliver', 'customerOrderRecive'];
+    const allowedTypes = ['RestaurantOwner', 'deliver', 'customerOrderRecive'];
     if (!allowedTypes.includes(statusType)) {
       return res.status(400).json({ message: 'Invalid status type' });
     }
 
     const userRole = req.user.role.toLowerCase();
     const rolePermissions = {
-      restaurantadmin: 'restaurantAdmin',
+      restaurantadmin: 'RestaurantOwner',
       deliver: 'deliver',
       customer: 'customerOrderRecive'
     };
