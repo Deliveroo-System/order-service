@@ -84,14 +84,14 @@ exports.updateOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { statusType, value } = req.body;
 
-    const allowedTypes = ['RestaurantOwner', 'deliver', 'customerOrderRecive'];
+    const allowedTypes = ['restaurantAdmin', 'deliver', 'customerOrderRecive'];
     if (!allowedTypes.includes(statusType)) {
       return res.status(400).json({ message: 'Invalid status type' });
     }
 
     const userRole = req.user.role.toLowerCase();
     const rolePermissions = {
-      restaurantowner: 'RestaurantOwner',
+      restaurantadmin: 'restaurantAdmin',
       deliver: 'deliver',
       customer: 'customerOrderRecive'
     };
@@ -103,7 +103,7 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    const order = await UserDetails.findOne({ orderId: id });
+    const order = await UserDetails.findById(id);
     if (!order) {
       return res.status(404).json({ message: 'UserDetails not found' });
     }
