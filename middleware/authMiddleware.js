@@ -1,3 +1,4 @@
+
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
@@ -40,3 +41,4 @@ function authorizeRoles(...roles) {
   }
   
 module.exports = { authMiddleware, authorizeRoles };
+

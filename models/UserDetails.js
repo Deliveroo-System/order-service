@@ -58,13 +58,20 @@ const userDetailsSchema = new mongoose.Schema({
   restaurantId: String,
   deliveryId: String,
   categoryId: String,
-  menuId: String,
-  menuItemId: String,
-  categoryName: String,
-  restaurantName: String,
-  restaurantDescription: String,
-  menuName: String,
-  menuItemName: String,
+  menus: [
+    {
+      menuId: { type: String, required: true },
+      menuName: { type: String, required: true },
+      items: [
+        {
+          menuItemId: { type: String, required: true },
+          menuItemName: { type: String, required: true },
+          qty: { type: Number, required: true },
+          price: { type: Number, required: true }
+        }
+      ]
+    }
+  ],
 
   // Statuses
   RestaurantOwner: {
