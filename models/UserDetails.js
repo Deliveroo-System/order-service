@@ -67,7 +67,7 @@ const userDetailsSchema = new mongoose.Schema({
   menuItemName: String,
 
   // Statuses
-  restaurantAdmin: {
+  RestaurantOwner: {
     type: String,
     enum: ['Pending', 'Approved', 'Rejected'],
     default: 'Pending'
