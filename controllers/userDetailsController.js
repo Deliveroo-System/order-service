@@ -84,7 +84,7 @@ exports.updateOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { statusType, value } = req.body;
 
-    const allowedTypes = ['RestaurantOwner', 'deliver', 'customerOrderRecive'];
+    const allowedTypes = ['RestaurantOwner', 'RestaurantOwner', 'customerOrderRecive'];
     if (!allowedTypes.includes(statusType)) {
       return res.status(400).json({ message: 'Invalid status type' });
     }
@@ -92,16 +92,11 @@ exports.updateOrderStatus = async (req, res) => {
     const userRole = req.user.role.toLowerCase();
     const rolePermissions = {
       restaurantowner: 'RestaurantOwner',
-      deliver: 'deliver',
+      deliver: 'RestaurantOwner',
       customer: 'customerOrderRecive'
     };
 
     const allowedStatusType = rolePermissions[userRole];
-    if (statusType !== allowedStatusType) {
-      return res.status(403).json({
-        message: `Access denied: ${userRole} cannot update ${statusType} status`
-      });
-    }
 
     const order = await UserDetails.findOne({ orderId: id });
     if (!order) {
